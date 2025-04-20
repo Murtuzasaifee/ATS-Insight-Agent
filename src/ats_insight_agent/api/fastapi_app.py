@@ -116,4 +116,15 @@ async def root():
         "docs_url": "/docs",
         "redoc_url": "/redoc"
     }
+    
+    
+@app.post("/api/v1/ats/start", response_model=ATSResponse)
+async def start_sdlc(
+    ats_request: ATSRequest,
+    settings: Settings = Depends(validate_api_keys)
+    ):
+
+    
+    return None
+
 
