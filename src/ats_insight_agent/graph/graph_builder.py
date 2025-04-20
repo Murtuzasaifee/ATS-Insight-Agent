@@ -5,16 +5,29 @@ from src.ats_insight_agent.state.ats_state import ATSState
 
 class GraphBuilder:
     
-    def __init__(self, llm):
-        self.llm = llm
+    def __init__(self):
         self.graph_builder = StateGraph(ATSState)
         self.memory = MemorySaver()
                 
+    
+    def set_groq_llm(self, groq_llm):
+        self.groq_llm = groq_llm
+    
+    
+    def set_gemini_llm(self, gemini_llm):
+        self.gemini_llm = gemini_llm
+        
+        
+    def set_openai_llm(self, openai_llm):
+        self.openai_llm = openai_llm
+    
     
     def build_sdlc_graph(self):
         """
             Configure the graph by adding nodes, edges
         """
+        
+        self.graph_builder.add_edge(START, END)
         
         pass
          
@@ -25,15 +38,7 @@ class GraphBuilder:
         """
         self.build_sdlc_graph()
         return self.graph_builder.compile(
-            interrupt_before=[
-                'get_user_requirements',
-                'review_user_stories',
-                'review_design_documents',
-                'code_review',
-                'security_review',
-                'review_test_cases',
-                'qa_review'
-            ],checkpointer=self.memory
+            interrupt_before=[],checkpointer=self.memory
         )
         
              

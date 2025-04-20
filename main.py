@@ -1,5 +1,7 @@
+from src.ats_insight_agent.api.fastapi_app import load_app
+
 def main():
-    print("Hello from ats-insight-agent!")
+    load_app()
 
 
 if __name__ == "__main__":
