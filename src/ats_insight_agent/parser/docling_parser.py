@@ -1,7 +1,7 @@
 from loguru import logger
 import hashlib
 from typing import Any, Dict
-import docling
+import json
 from docling.document_converter import DocumentConverter
 from src.ats_insight_agent.dto.resume_document import ResumeDocument
 from pathlib import Path
@@ -28,7 +28,7 @@ class DoclingParser:
             # dump to a dict
             doc_dict = doc.export_to_dict()
             
-            logger.debug(f"Docling Document: {doc_dict}")
+            logger.debug(f"Docling Document: {json.dumps(doc_dict)}")
 
             origin = doc_dict.get("origin", {})
             metadata["original_filename"] = origin.get("filename")
@@ -51,14 +51,15 @@ class DoclingParser:
             has_skills = False
 
             for text_item in doc_dict.get("texts", []):
-                label = text_item.get("label")
-                if label in ("SECTION_HEADER", "TITLE"):
+                label = text_item.get("label").lower()
+                if label in ("section_header", "title"):
                     heading_text = text_item.get("text", "").lower()
+                    logger.debug(f"heading_text: {heading_text}")
                     if any(k in heading_text for k in ["education", "academic", "degree"]):
                         has_education = True
                     if any(k in heading_text for k in ["experience", "work", "employment", "career"]):
                         has_experience = True
-                    if any(k in heading_text for k in ["skill", "expertise", "qualification", "proficiency"]):
+                    if any(k in heading_text for k in ["skill", "expertise", "qualification", "proficiency","technology"]):
                         has_skills = True
 
             metadata["has_education"]   = has_education
