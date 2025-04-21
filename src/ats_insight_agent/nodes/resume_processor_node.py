@@ -9,9 +9,10 @@ import json
 
 class ResumeProcessorConfig(BaseModel):
     """Configuration for the resume processor."""
-    collection_name: str = Field(default="resumes1")
+    collection_name: str = Field(default="resumes")
     collection_desc: str = Field(default="Resume collection")
     index_file_size: int = Field(default=32)
+    vector_dim: int = Field(default=768)
     supported_extensions: List[str] = Field(default=[".pdf", ".docx", ".html"])
     
 
@@ -22,7 +23,7 @@ class ResumeProcessor:
         self.config = ResumeProcessorConfig()
         self.docling_parser = DoclingParser(self.config.supported_extensions)
         self.embeedings = Embeddings()
-        self.vector_store = MilvusStore(self.config.collection_name, self.config.collection_desc )
+        self.vector_store = MilvusStore(self.config.collection_name, self.config.collection_desc, self.config.vector_dim )
         self.vector_store.setup_collection()
        
         

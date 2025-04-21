@@ -1,6 +1,7 @@
 from loguru import logger
 from src.ats_insight_agent.dto.resume_document import ResumeDocument
 from openai import OpenAI
+from sentence_transformers import SentenceTransformer
 
 class Embeddings:
     def __init__(self):
@@ -19,7 +20,8 @@ class Embeddings:
         try:
             
             # Generate embeddings
-            resume.vector = self.generate_openai_embeddings(resume.content)
+            # resume.vector = self.generate_openai_embeddings(resume.content)
+            resume.vector = self.generate_huggingface_embeddings(resume.content)
             
             logger.info(f"Generated vector for document: {resume.filename}")
             return resume
@@ -40,4 +42,8 @@ class Embeddings:
         )
         return response.data[0].embedding
         
-        
+    
+    def generate_huggingface_embeddings(self, content: str):
+        model = SentenceTransformer('ibm-granite/granite-embedding-278m-multilingual')
+        vector = model.encode(content).tolist()
+        return vector

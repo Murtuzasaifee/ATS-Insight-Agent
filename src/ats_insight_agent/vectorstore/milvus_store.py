@@ -4,13 +4,13 @@ from src.ats_insight_agent.dto.resume_document import ResumeDocument
 
 class MilvusStore:
     
-    def __init__(self, collection_name, collection_desc):
+    def __init__(self, collection_name, collection_desc, vector_dim):
         
         self.collection_name = collection_name
         self.collection_desc = collection_desc
         self.host = "localhost"
         self.port = "19530"
-        self.vector_dim =1536
+        self.vector_dim =vector_dim
         
         try:
             connections.connect(
