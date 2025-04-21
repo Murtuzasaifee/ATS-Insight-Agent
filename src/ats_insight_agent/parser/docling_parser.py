@@ -13,6 +13,52 @@ class DoclingParser:
         self.supported_extensions = supported_extensions
         pass
     
+    def parse_resume(self, file_path: str) -> ResumeDocument:
+        """
+        Parse a resume file and extract its content and metadata.
+        
+        Args:
+            file_path: Path to the resume file
+            
+        Returns:
+            ResumeDocument object containing parsed information
+        """
+        file_path = Path(file_path).resolve()
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        # Check if file extension is supported
+        if file_path.suffix.lower() not in self.supported_extensions:
+            raise ValueError(f"Unsupported file format: {file_path.suffix}")
+        
+        try:
+            # Parse document using docling
+            logger.info(f"Parsing document: {file_path}")
+            converter = DocumentConverter()
+            result = converter.convert(str(file_path))
+            doc = result.document
+            
+            # Extract content and metadata
+            content = doc.export_to_text()
+            metadata = self.extract_metadata(doc)
+            
+            # Create resume document
+            doc_id = self.generate_document_id(str(file_path), content)
+            resume_doc = ResumeDocument(
+                doc_id=doc_id,
+                filename=file_path.name,
+                file_path=str(file_path),
+                content=content,
+                metadata=metadata
+            )
+            
+            logger.info(f"Successfully parsed document: {file_path.name} (ID: {doc_id})")
+            return resume_doc
+            
+        except Exception as e:
+            logger.error(f"Failed to parse document {file_path}: {str(e)}")
+            raise
+    
     
     def generate_document_id(self, file_path: str, content: str) -> str:
         """Generate a unique ID for a document based on its path and content."""
@@ -59,7 +105,7 @@ class DoclingParser:
                         has_education = True
                     if any(k in heading_text for k in ["experience", "work", "employment", "career"]):
                         has_experience = True
-                    if any(k in heading_text for k in ["skill", "expertise", "qualification", "proficiency","technology"]):
+                    if any(k in heading_text for k in ["skill", "expertise", "qualification", "proficiency"]):
                         has_skills = True
 
             metadata["has_education"]   = has_education
@@ -71,48 +117,4 @@ class DoclingParser:
 
         return metadata
     
-    def parse_resume(self, file_path: str) -> ResumeDocument:
-        """
-        Parse a resume file and extract its content and metadata.
-        
-        Args:
-            file_path: Path to the resume file
-            
-        Returns:
-            ResumeDocument object containing parsed information
-        """
-        file_path = Path(file_path).resolve()
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
-        
-        # Check if file extension is supported
-        if file_path.suffix.lower() not in self.supported_extensions:
-            raise ValueError(f"Unsupported file format: {file_path.suffix}")
-        
-        try:
-            # Parse document using docling
-            logger.info(f"Parsing document: {file_path}")
-            converter = DocumentConverter()
-            result = converter.convert(str(file_path))
-            doc = result.document
-            
-            # Extract content and metadata
-            content = doc.export_to_text()
-            metadata = self.extract_metadata(doc)
-            
-            # Create resume document
-            doc_id = self.generate_document_id(str(file_path), content)
-            resume_doc = ResumeDocument(
-                doc_id=doc_id,
-                filename=file_path.name,
-                file_path=str(file_path),
-                content=content,
-                metadata=metadata
-            )
-            
-            logger.info(f"Successfully parsed document: {file_path.name} (ID: {doc_id})")
-            return resume_doc
-            
-        except Exception as e:
-            logger.error(f"Failed to parse document {file_path}: {str(e)}")
-            raise
+    
