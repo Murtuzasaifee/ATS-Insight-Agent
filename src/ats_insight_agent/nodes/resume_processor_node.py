@@ -5,29 +5,21 @@ from loguru import logger
 from src.ats_insight_agent.parser.docling_parser import DoclingParser
 from src.ats_insight_agent.vectorstore.embeddings import Embeddings
 from src.ats_insight_agent.vectorstore.milvus_store import MilvusStore
-import json
-
-class ResumeProcessorConfig(BaseModel):
-    """Configuration for the resume processor."""
-    collection_name: str = Field(default="resumes")
-    collection_desc: str = Field(default="Resume collection")
-    index_file_size: int = Field(default=32)
-    vector_dim: int = Field(default=768)
-    supported_extensions: List[str] = Field(default=[".pdf", ".docx", ".html"])
+from src.ats_insight_agent.state.ats_state import ATSState
+from src.ats_insight_agent.dto.config import Config
     
 
 class ResumeProcessor:
     
-    def __init__(self, llm):
+    def __init__(self, llm, milvus_store:MilvusStore, config: Config):
         self.llm = llm
-        self.config = ResumeProcessorConfig()
+        self.config = config
         self.docling_parser = DoclingParser(self.config.supported_extensions)
         self.embeedings = Embeddings()
-        self.vector_store = MilvusStore(self.config.collection_name, self.config.collection_desc, self.config.vector_dim )
-        self.vector_store.setup_collection()
+        self.vector_store = milvus_store
        
         
-    def process_resume_file(self, file_path: str) -> str:
+    def process_resume_file(self, state: ATSState) -> str:
         """
         Process a resume file: parse, vectorize, and store in Milvus.
         
@@ -38,14 +30,13 @@ class ResumeProcessor:
             Document ID of the stored resume
         """
         # Parse resume
-        resume = self.docling_parser.parse_resume(file_path)
+        resume = self.docling_parser.parse_resume(state.file_path)
         logger.debug(f"Resume Content: {resume.model_dump_json()}")
         
         # Vectorize resume
-        # resume = self.embeedings.vectorize_resume(resume)
         resume = self.embeedings.vectorize_resume(resume)
         
         # Store in Milvus
-        doc_id = self.vector_store.store_chunks(resume.chunks)
-        
-        return doc_id
+        resume_id = self.vector_store.store_chunks(resume.chunks)
+        state.resume_id = resume_id
+        return state

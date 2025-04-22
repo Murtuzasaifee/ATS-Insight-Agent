@@ -10,7 +10,9 @@ class ATSState(BaseModel):
     Represents the structure of the state used in the SDLC graph
 
     """    
-    pass
+    
+    file_path: str = Field(default=None, description="Path to the resume file")
+    resume_id: str = Field(default=None, description="Resume ID")
     
     
     

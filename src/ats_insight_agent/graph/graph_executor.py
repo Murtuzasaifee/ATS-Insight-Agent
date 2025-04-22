@@ -12,19 +12,19 @@ class GraphExecutor:
         return {"configurable": {"thread_id": task_id}}
     
     ## ------- Start the Workflow ------- ##
-    def start_workflow(self, project_name: str):
+    def start_workflow(self, file_path:str):
         
         graph = self.graph
         
         flush_redis_cache()
         
         # Generate a unique task id
-        task_id = f"sdlc-session-{uuid.uuid4().hex[:8]}"
+        task_id = f"ats-session-{uuid.uuid4().hex[:8]}"
         
         thread = self.get_thread(task_id)
         
         state = None
-        for event in graph.stream({"project_name": project_name},thread, stream_mode="values"):
+        for event in graph.stream({"file_path": file_path},thread, stream_mode="values"):
            state = event
         
         current_state = graph.get_state(thread)

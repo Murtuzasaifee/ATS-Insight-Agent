@@ -25,7 +25,7 @@ class MilvusStore:
             raise
         
     
-    def setup_collection(self) -> None:
+    def setup_resume_collection(self) -> None:
         """Set up the Milvus collection for storing resume vectors."""
         try:
             # Check if collection exists
@@ -61,7 +61,7 @@ class MilvusStore:
             raise
         
         
-    def store_chunks(self, chunk_rows: List[Dict]) -> None:
+    def store_chunks(self, chunk_rows: List[Dict]) -> str:
         """
         Store a resume document in the Milvus collection.
         
@@ -73,6 +73,8 @@ class MilvusStore:
         """
         
         try:
+            self.setup_resume_collection()
+            
             collection = Collection(self.collection_name)
             data = [
                 [row["chunk_id"] for row in chunk_rows],
@@ -84,6 +86,7 @@ class MilvusStore:
             ]
             collection.insert(data)
             logger.info(f"Inserted {len(chunk_rows)} chunks into Milvus for resume {chunk_rows[0]['resume_id']}")
+            return chunk_rows[0]["resume_id"]
 
         except Exception as e:
             logger.error(f"Failed to store chunks: {str(e)}")

@@ -11,6 +11,8 @@ from src.ats_insight_agent.graph.graph_builder import GraphBuilder
 from src.ats_insight_agent.graph.graph_executor import GraphExecutor
 from src.ats_insight_agent.dto.ats_request import ATSRequest
 from src.ats_insight_agent.dto.ats_response import ATSResponse
+from src.ats_insight_agent.vectorstore.milvus_store import MilvusStore
+from src.ats_insight_agent.dto.config import Config
 from contextlib import asynccontextmanager
 from src.ats_insight_agent.utils.logging_config import setup_logging
 from loguru import logger
@@ -80,7 +82,9 @@ async def lifespan(app: FastAPI):
     graph_builder.set_gemini_llm(gemini_llm)
     graph_builder.set_openai_llm(openai_llm)
     
-    graph = graph_builder.setup_graph()
+    config = Config()
+    milvus_store = MilvusStore(config.collection_name, config.collection_desc, config.vector_dim )
+    graph = graph_builder.setup_graph(milvus_store)
     graph_executor = GraphExecutor(graph)
     
     app.state.graph = graph
@@ -124,7 +128,29 @@ async def start_sdlc(
     settings: Settings = Depends(validate_api_keys)
     ):
 
+    try:
+        graph_executor = app.state.graph_executor
+        
+        if isinstance (graph_executor, GraphExecutor) == False:
+            raise Exception("Graph Executor not initialized")
+        
+        graph_response = graph_executor.start_workflow(ats_request.file_path)
+        
+        logger.debug(f"Start Workflow Response: {graph_response}")
+        
+        return ATSResponse(
+            status="success",
+            message="ATS process started successfully",
+            task_id=graph_response["task_id"],
+            state=graph_response["state"]
+        )
     
-    return None
+    except Exception as e:
+        error_response = ATSResponse(
+            status="error",
+            message="Failed to start the process",
+            error=str(e)
+        )
+        return JSONResponse(status_code=500, content=error_response.model_dump())
 
 
