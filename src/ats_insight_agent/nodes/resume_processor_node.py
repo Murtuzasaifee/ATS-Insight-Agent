@@ -46,6 +46,6 @@ class ResumeProcessor:
         resume = self.embeedings.vectorize_resume(resume)
         
         # Store in Milvus
-        doc_id = self.vector_store.store_resume(resume)
+        doc_id = self.vector_store.store_chunks(resume.chunks)
         
         return doc_id

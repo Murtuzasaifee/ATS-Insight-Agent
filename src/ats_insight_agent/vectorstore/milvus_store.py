@@ -1,6 +1,7 @@
 from pymilvus import connections, Collection, FieldSchema, CollectionSchema, DataType, utility
 from loguru import logger
 from src.ats_insight_agent.dto.resume_document import ResumeDocument
+from typing import List, Dict
 
 class MilvusStore:
     
@@ -34,12 +35,12 @@ class MilvusStore:
             
             # Define fields for the collection
             fields = [
-                FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, max_length=100),
+                FieldSchema(name="chunk_id", dtype=DataType.VARCHAR, is_primary=True, max_length=100),
+                FieldSchema(name="resume_id", dtype=DataType.VARCHAR, max_length=100),
                 FieldSchema(name="filename", dtype=DataType.VARCHAR, max_length=256),
-                FieldSchema(name="file_path", dtype=DataType.VARCHAR, max_length=512),
-                FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
+                FieldSchema(name="chunk_text", dtype=DataType.VARCHAR, max_length=65535),
                 FieldSchema(name="metadata", dtype=DataType.JSON),
-                FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=self.vector_dim)
+                FieldSchema(name="chunk_vector", dtype=DataType.FLOAT_VECTOR, dim=self.vector_dim)
             ]
             
             # Create schema and collection
@@ -52,14 +53,15 @@ class MilvusStore:
                 "index_type": "IVF_FLAT",
                 "params": {"nlist": 128}
             }
-            collection.create_index(field_name="vector", index_params=index_params)
+            collection.create_index(field_name="chunk_vector", index_params=index_params)
             collection.load()
             logger.info(f"Created and indexed collection: {self.collection_name}")
         except Exception as e:
             logger.error(f"Failed to set up collection: {str(e)}")
             raise
-    
-    def store_resume(self, resume: ResumeDocument) -> str:
+        
+        
+    def store_chunks(self, chunk_rows: List[Dict]) -> None:
         """
         Store a resume document in the Milvus collection.
         
@@ -69,26 +71,20 @@ class MilvusStore:
         Returns:
             Document ID of the stored resume
         """
-        if not resume.vector:
-            raise ValueError("Resume must have vector embeddings before storing")
         
         try:
             collection = Collection(self.collection_name)
-            
-            # Insert data
             data = [
-                [resume.doc_id],
-                [resume.filename],
-                [str(resume.file_path)],
-                [resume.content],
-                [resume.metadata],
-                [resume.vector]
+                [row["chunk_id"] for row in chunk_rows],
+                [row["resume_id"] for row in chunk_rows],
+                [row["filename"] for row in chunk_rows],
+                [row["chunk_text"] for row in chunk_rows],
+                [row["metadata"] for row in chunk_rows],
+                [row["chunk_vector"] for row in chunk_rows]
             ]
-            
             collection.insert(data)
-            logger.info(f"Stored resume in Milvus: {resume.filename} (ID: {resume.doc_id})")
-            return resume.doc_id
-            
+            logger.info(f"Inserted {len(chunk_rows)} chunks into Milvus for resume {chunk_rows[0]['resume_id']}")
+
         except Exception as e:
-            logger.error(f"Failed to store resume {resume.filename}: {str(e)}")
+            logger.error(f"Failed to store chunks: {str(e)}")
             raise

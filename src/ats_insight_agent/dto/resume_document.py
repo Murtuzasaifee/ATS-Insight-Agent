@@ -8,4 +8,5 @@ class ResumeDocument(BaseModel):
     file_path: str
     content: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    vector: Optional[List[float]] = None
+    vectors: Optional[List[float]] = None
+    chunks: Optional[List[Dict[str, Any]]] = None
