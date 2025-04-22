@@ -36,8 +36,8 @@ class Embeddings:
             ### Generate embeddings
             # resume.vectors = self.generate_openai_embeddings(chunks)
             # resume.vectors = self.generate_huggingface_embeddings(chunks)
-            resume.vectors = self.generate_googleai_embeddings(chunks)
-            
+            # resume.vectors = self.generate_googleai_embeddings(chunks)
+            resume.vectors = self.generate_fastembed_embeddings(chunks)
             
             chunk_rows = []
             for i, (chunk_text, vector) in enumerate(zip(chunks, resume.vectors)):
@@ -81,6 +81,15 @@ class Embeddings:
         
         model = SentenceTransformer('ibm-granite/granite-embedding-278m-multilingual')
         vector = model.encode(content).tolist()
+        return vector
+    
+    def generate_fastembed_embeddings(self, content: List[str]):
+        """Generate embeddings using Fast Embed model."""
+        
+        logger.info("Generating embeddings using Fast Embed model")
+        
+        embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-base-en-v1.5")
+        vector = embeddings.embed_documents(content)
         return vector
 
     def generate_googleai_embeddings(self, content: List[str]):
