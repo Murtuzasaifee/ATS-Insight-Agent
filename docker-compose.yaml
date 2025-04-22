@@ -62,6 +62,16 @@ services:
       start_period: 90s
       timeout: 20s
       retries: 3
+      
+  attu:
+    container_name: ats-milvus-attu
+    image: zilliz/attu:v2.2.5
+    environment:
+      MILVUS_URL: http://standalone:19530
+    ports:
+      - "8000:3000"
+    depends_on:
+      - standalone
 
   redis:
     container_name: ats-redis
